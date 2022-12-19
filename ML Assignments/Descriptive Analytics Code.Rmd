@@ -1,0 +1,149 @@
+---
+title: "AML HW 2"
+author: "Shivangi Mundhra SUID:842548148"
+date: '2022-09-19'
+output: html_document
+---
+
+Read .csv file and store it into supermarketSales 
+
+```{r}
+supermarketSales <- read.csv("/Users/shivangi/Desktop/Applied Machine learning/Week 2/supermarket_sales.csv")
+```
+
+see the structure of the dataframe
+
+```{r}
+str(supermarketSales)
+```
+
+
+```{r}
+library(tidyverse)
+# install.packages("hrbrthemes")
+library(hrbrthemes)
+library(viridis)
+library(forcats)
+library(ggplot2)
+histTotalSales <- supermarketSales %>% mutate(Branch = fct_reorder(Branch, Total)) %>% ggplot( aes(x = Total, color = Branch, fill = Branch)) + geom_histogram(alpha = 0.6, binwidth = 250) + theme(legend.position = "none", panel.spacing = unit(0.1, "lines"), strip.text.x = element_text(size = 8)) + xlab("Total Sales ($)") + ylab("Frequency") + facet_wrap(~Branch) + ggtitle("Histogram of Total Sales by Branch")
+```
+
+```{r}
+histTotalSales
+# + scale_fill_viridis(discrete = TRUE) + scale_color_viridis(discrete = TRUE) + theme_ipsum() 
+```
+
+
+```{r}
+p1 <- ggplot(supermarketSales, aes(x = Branch, y = Unit.price, fill = Product.line)) + geom_boxplot() + facet_wrap(~Product.line) + ggtitle("Box plots of unit price by product line")
+p1
+```
+
+create a chart that shows gross income by gender by branch
+
+```{r}
+# colored by the variable color
+ggplot(supermarketSales, aes(x = Branch, y = gross.income)) + geom_bar(aes(color = Gender, fill = Gender), stat = "identity", position = position_stack()) + scale_color_manual(values = c("#0073C2FF", "#EFC000FF")) + scale_fill_manual(values = c("#0073C2FF", "#EFC000FF")) + ggtitle("Bar chart for gross income by gender by branch")
+# Use position = position_dodge() 
+p <- ggplot(supermarketSales, aes(x = Branch, y = gross.income)) + geom_bar(aes(color = Gender, fill = Gender), stat = "identity", position = position_dodge(0.8), width = 0.7) + scale_color_manual(values = c("#0073C2FF", "#EFC000FF"))+ scale_fill_manual(values = c("#0073C2FF", "#EFC000FF")) + ggtitle("Bar chart for gross income by gender by branch")
+p
+```
+
+create a chart that shows number of sales by gender by branch
+
+```{r}
+byGenderSales <- supermarketSales %>% count(Branch, Gender, sort = TRUE)
+barGS <- ggplot(data = byGenderSales, aes(x = Branch, y = n)) + geom_bar(aes(color = Gender, fill = Gender), stat = "identity", position = position_stack()) + ggtitle("Bar chart for number of sales by gender by branch")
+barGS
+# byGenderSales <- supermarketSales %>% count(Branch, Gender, sort = TRUE)
+barGS1 <- ggplot(data = byGenderSales, aes(x = Branch, y = n)) + geom_bar(aes(color = Gender, fill = Gender), stat = "identity", position = position_dodge(0.8), width = 0.7) + ggtitle("Bar chart for number of sales by gender by branch")
+barGS1
+# position = position_dodge(0.8), width = 0.7
+```
+
+create a chart that shows number of sales by product type by branch
+
+```{r}
+byProductSales <- supermarketSales %>% count(Branch, Product.line, sort = TRUE)
+barGS <- ggplot(data = byProductSales, aes(x = Branch, y = n)) + geom_bar(aes(color = Product.line, fill = Product.line), stat = "identity", position = position_stack()) + ggtitle("Number of sales by product line by branch")
+barGS
+# byGenderSales <- supermarketSales %>% count(Branch, Gender, sort = TRUE)
+barGS1 <- ggplot(data = byProductSales, aes(x = Branch, y = n)) + geom_bar(aes(color = Product.line, fill = Product.line), stat = "identity", position = position_dodge(0.8), width = 0.7) + ggtitle("Number of sales by product line by branch")
+barGS1
+```
+
+create a chart that shows time series of number of sales by branch
+
+```{r}
+supermarketSales$month <- months(as.Date(supermarketSales$Date))
+```
+
+```{r}
+# supermarketSales[is.na(supermarketSales$month),]
+
+supermarketSales$monthupdated <- supermarketSales$monthupdated
+supermarketSales$monthupdated[substr(supermarketSales$Date,1,1) == '1'] <- 'January'
+supermarketSales$monthupdated[substr(supermarketSales$Date,1,1) == '2'] <- 'February'
+supermarketSales$monthupdated[substr(supermarketSales$Date,1,1) == '3'] <- 'March'
+```
+
+```{r}
+byDateSales <- supermarketSales %>% count(Branch, monthNum = as.numeric(substr(supermarketSales$Date,1,1)), monthupdated, sort = TRUE)
+byDateSales$monthupdated <- factor(byDateSales$monthupdated, levels = c("January", "February", "March"))
+lineGS <- ggplot(data = byDateSales, aes(x = monthupdated, y = n, group = Branch, color = Branch)) + geom_line() + ggtitle("Number of sales by month by branch")
+lineGS
+# byGenderSales <- supermarketSales %>% count(Branch, Gender, sort = TRUE)
+# barGS1 <- ggplot(data = byDateSales, aes(x = Branch, y = n)) + geom_bar(aes(color = Product.line, fill = Product.line), stat = "identity", position = position_dodge(0.8), width = 0.7)
+# barGS1
+byDateSales
+```
+
+create a chart that shows sales by times of day by branch
+
+```{r}
+supermarketSales$timeUpdated <- as.numeric(substr(supermarketSales$Time, 1, 2))
+```
+
+```{r}
+byTimeSales <- supermarketSales %>% count(Branch, timeUpdated, sort = TRUE)
+# byDateSales$monthupdated <- factor(byDateSales$monthupdated, levels = c("January", "February", "March"))
+lineGS1 <- ggplot(data = byTimeSales, aes(x = timeUpdated, y = n, group = Branch, color = Branch)) + geom_line() + ggtitle("Number of sales by time of day by branch")
+lineGS1
+```
+
+create a chart that shows gross income member type by branch
+
+```{r}
+byMemberRating <- supermarketSales %>% group_by(Branch, Customer.type) %>% summarize(meanRating = mean(Rating))
+barGM <- ggplot(data = byMemberRating, aes(x = Branch, y = meanRating)) + geom_bar(aes(color = Customer.type, fill = Customer.type), stat = "identity", position = position_stack()) + ggtitle("Average rating by customer type and branch")
+barGM
+# byGenderSales <- supermarketSales %>% count(Branch, Gender, sort = TRUE)
+barGM1 <- ggplot(data = byMemberRating, aes(x = Branch, y = meanRating)) + geom_bar(aes(color = Customer.type, fill = Customer.type), stat = "identity", position = position_dodge(0.8), width = 0.7) + ggtitle("Average rating by customer type and branch")
+barGM1
+```
+
+
+create a chart that shows gross income by branch by product
+
+```{r}
+# colored by the variable color
+ggplot(supermarketSales, aes(x = Branch, y = gross.income)) + geom_bar(aes(color = Product.line, fill = Product.line), stat = "identity", position = position_stack())
+# + scale_color_manual(values = c("#0073C2FF", "#EFC000FF")) + scale_fill_manual(values = c("#0073C2FF", "#EFC000FF"))
+# Use position = position_dodge() 
+p <- ggplot(supermarketSales, aes(x = Branch, y = gross.income)) + geom_bar(aes(color = Product.line, fill = Product.line), stat = "identity", position = position_dodge(0.8), width = 0.7)
+# + scale_color_manual(values = c("#0073C2FF", "#EFC000FF")) + scale_fill_manual(values = c("#0073C2FF", "#EFC000FF"))
+p
+```
+
+
+create a chart that shows gross income by branch
+
+```{r}
+byPaymentType <- supermarketSales %>% count(Branch, Payment, sort = TRUE)
+barGS <- ggplot(data = byPaymentType, aes(x = Branch, y = n)) + geom_bar(aes(color = Payment, fill = Payment), stat = "identity", position = position_stack()) + ggtitle("Number of sales by payment type by branch")
+barGS
+# byGenderSales <- supermarketSales %>% count(Branch, Gender, sort = TRUE)
+barGS1 <- ggplot(data = byPaymentType, aes(x = Branch, y = n)) + geom_bar(aes(color = Payment, fill = Payment), stat = "identity", position = position_dodge(0.8), width = 0.7) + ggtitle("Number of sales by payment type by branch")
+barGS1
+```
+
